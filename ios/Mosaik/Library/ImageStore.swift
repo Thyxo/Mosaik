@@ -98,6 +98,14 @@ final class ImageStore {
         return a.pixelHeight > 0 ? CGFloat(a.pixelWidth) / CGFloat(a.pixelHeight) : 1
     }
 
+    /// Live Photo? (kun de ægte fotos kan være det)
+    func isLive(_ src: Int32) -> Bool {
+        guard src < 0 else { return false }
+        let k = Int(-src - 1)
+        guard k < RealPhotos.shared.assets.count else { return false }
+        return RealPhotos.shared.assets[k].mediaSubtypes.contains(.photoLive)
+    }
+
     /// Fuldt billede til fremviseren. Puljen hentes fra Picsum (caches på disken).
     func full(_ src: Int32, screenPx: CGFloat) async -> CGImage? {
         if src >= 0 {

@@ -32,6 +32,10 @@ final class AppState {
     var realLoaded = 0
 
     @ObservationIgnored var visibleItems: () -> [Int] = { [] }
+    /// feltets plads på skærmen (til zoom ind/ud af fremviseren)
+    @ObservationIgnored var tileRect: (Int, Bool) -> CGRect? = { _, _ in nil }
+    /// feltet der er skjult i gitteret, mens fremviseren viser det
+    var heroHidden: Int?
     @ObservationIgnored private var relay: RelayClient?
     @ObservationIgnored private var lastRelayAt = UserDefaults.standard.double(forKey: "mosaik.lastRelayAt")
     @ObservationIgnored private var started = false
@@ -313,7 +317,12 @@ final class AppState {
     func gridInfo(topIndex: Int, atBottom: Bool, cols: Int) {
         guard (topIndex, atBottom, cols) != lastInfo else { return }
         lastInfo = (topIndex, atBottom, cols)
-        // Fotos viser kun antallet nederst; ellers står datoen i mærket i gitteret
-        subtitle = atBottom ? "\(Dates.number(tiles.count)) \(s.itemsWord)" : ""
+        // Fotos: antallet nederst; ellers datoerne for de viste billeder (3/5 kolonner) – længere ude står de i mærkerne
+        if atBottom { subtitle = "\(Dates.number(tiles.count)) \(s.itemsWord)" }
+        else if cols <= 5, !dates.isEmpty {
+            let a = min(topIndex, dates.count - 1)
+            let b = min(dates.count - 1, a + cols * 6)
+            subtitle = Dates.range(dates[a], dates[b])
+        } else { subtitle = "" }
     }
 }

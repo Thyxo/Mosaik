@@ -28,7 +28,7 @@ struct RootView: View {
             MainTabs()
             if let i = app.viewerIndex {
                 ViewerView(start: i)
-                    .transition(.opacity.combined(with: .scale(scale: 0.96)))
+                    .id(i)
                     .zIndex(10)
             }
         }

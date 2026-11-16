@@ -58,6 +58,20 @@ enum Dates {
         fine ? dayMonthYear.string(from: d) : monthYear.string(from: d).capitalizedFirst
     }
 
+    private static let dayNum: DateFormatter = { let f = DateFormatter(); f.locale = locale; f.dateFormat = "d."; return f }()
+    private static let dayMon: DateFormatter = { let f = DateFormatter(); f.locale = locale; f.dateFormat = "d. MMM"; return f }()
+    private static let dayMonYear: DateFormatter = { let f = DateFormatter(); f.locale = locale; f.dateFormat = "d. MMM yyyy"; return f }()
+
+    /// "4.–8. okt. 2026", "28. sep.–3. okt. 2026", "8. okt. 2026" (som Fotos' undertitel)
+    static func range(_ a: Date, _ b: Date) -> String {
+        let cal = Calendar.current
+        let (x, y) = a <= b ? (a, b) : (b, a)
+        if cal.isDate(x, inSameDayAs: y) { return dayMonYear.string(from: y) }
+        if cal.isDate(x, equalTo: y, toGranularity: .month) { return dayNum.string(from: x) + "–" + dayMonYear.string(from: y) }
+        if cal.isDate(x, equalTo: y, toGranularity: .year) { return dayMon.string(from: x) + "–" + dayMonYear.string(from: y) }
+        return dayMonYear.string(from: x) + "–" + dayMonYear.string(from: y)
+    }
+
     /// Titel og klokkeslæt i fremviseren
     static func viewer(_ d: Date) -> (String, String) {
         let cal = Calendar.current
