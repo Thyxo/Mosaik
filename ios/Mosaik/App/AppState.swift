@@ -22,6 +22,9 @@ final class AppState {
     var secretOpen = false
     var viewerIndex: Int?
     var badge = false
+    /// peek: det modtagne navn/svar står i fanebjælken i stedet for "Bibliotek" / "Samlinger"
+    var peek = ""
+    @ObservationIgnored private var peekTask: Task<Void, Never>?
 
     var busy = false
     var status = ""                     // seneste hændelse (vises i panelet)
@@ -302,7 +305,29 @@ final class AppState {
         UserDefaults.standard.set(b.at, forKey: "mosaik.lastRelayAt")
         // gamle beskeder (over 6 timer) ignoreres
         if Date().timeIntervalSince1970 * 1000 - b.at > 6 * 3600 * 1000 { return }
+        if b.kind == "q" || b.kind == "text" { showPeek(b.value) }
         Task { await run(kind: b.kind, value: b.value) }
+    }
+
+    // MARK: Peek
+
+    func showPeek(_ v: String) {
+        peekTask?.cancel()
+        guard s.peek != "off" else { peek = ""; return }
+        peek = v.trimmingCharacters(in: .whitespacesAndNewlines)
+        if s.peek == "10s" {
+            peekTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(10))
+                if !Task.isCancelled { self?.peek = "" }
+            }
+        }
+    }
+
+    /// Teksterne i fanebjælken: første ord i stedet for "Bibliotek", resten i stedet for "Samlinger"
+    var tabTitles: (String, String) {
+        let w = peek.split(separator: " ", maxSplits: 1).map(String.init)
+        guard let first = w.first else { return ("Bibliotek", "Samlinger") }
+        return (first, w.count > 1 ? w[1] : "Samlinger")
     }
 
     /// Send en test-besked gennem relæet (som en anden app ville gøre)
@@ -317,6 +342,8 @@ final class AppState {
     func gridInfo(topIndex: Int, atBottom: Bool, cols: Int) {
         guard (topIndex, atBottom, cols) != lastInfo else { return }
         lastInfo = (topIndex, atBottom, cols)
+        // peek forsvinder når mosaikken vises (helt ude)
+        if s.peek == "reveal", !peek.isEmpty, cols == levels.last { peek = "" }
         // Fotos: antallet nederst; ellers datoerne for de viste billeder (3/5 kolonner) – længere ude står de i mærkerne
         if atBottom { subtitle = "\(Dates.number(tiles.count)) \(s.itemsWord)" }
         else if cols <= 5, !dates.isEmpty {

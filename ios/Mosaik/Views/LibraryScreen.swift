@@ -7,12 +7,13 @@ struct MainTabs: View {
     @State private var tab = 0
 
     var body: some View {
+        let (t0, t1) = app.tabTitles
         TabView(selection: $tab) {
-            Tab("Bibliotek", systemImage: "photo.fill.on.rectangle.fill", value: 0) {
+            Tab(t0, systemImage: "photo.fill.on.rectangle.fill", value: 0) {
                 LibraryScreen()
             }
             .badge(app.badge ? 1 : 0)
-            Tab("Samlinger", systemImage: "rectangle.stack.fill", value: 1) {
+            Tab(t1, systemImage: "rectangle.stack.fill", value: 1) {
                 CollectionsScreen()
             }
             Tab(value: 2, role: .search) {

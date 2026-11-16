@@ -46,6 +46,11 @@ struct SecretPanel: View {
                         Toggle("Feltet \"mosaik\"", isOn: $app.s.listenMosaik)
                         Toggle("Google-søgning (\"google\")", isOn: $app.s.listenGoogle)
                         Toggle("Navn fra Noter+ (\"force\")", isOn: $app.s.listenForce)
+                        Picker("Peek i fanebjælken", selection: $app.s.peek) {
+                            Text("Til mosaikken vises").tag("reveal")
+                            Text("I 10 sekunder").tag("10s")
+                            Text("Fra").tag("off")
+                        }
                     } else {
                         PhotosPicker(selection: $pick, matching: .images) {
                             Label("Vælg billede …", systemImage: "photo")

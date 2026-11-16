@@ -11,6 +11,7 @@ Native Swift/SwiftUI-app, der installeres med **SideStore** (ligesom Number Read
 1. Tilskueren vælger frit, fx en kendt person: *Kim Larsen*.
 2. Navnet kommer til Mosaik via **relæet**, fx fra Google-appen, Noter+, en Genvej eller en medhjælper (se nedenfor).
 3. Mosaik slår navnet op på Wikipedia, henter et billede og bygger mosaikken. Det tager 1–3 sekunder. Når den er klar, får **Bibliotek** et lille rødt **1**-tal, ligesom på referencen.
+   **Peek:** navnet står samtidig i fanebjælken. Første ord står i stedet for "Bibliotek", resten i stedet for "Samlinger". Det forsvinder, når mosaikken vises (eller efter 10 sek., eller aldrig, alt efter panelet).
 4. Giv telefonen til tilskueren, eller vis den selv. Scroll lidt rundt i "dine" billeder nederst. Det er dine ægte, nyeste fotos.
 5. Knib for at zoome ud: 3 → 5 → 15 → **30 kolonner**, de samme niveauer som Fotos. Motivet træder frem på de yderste niveauer.
 

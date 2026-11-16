@@ -17,6 +17,7 @@ struct Settings: Codable, Equatable {
     var listenMosaik = true       // feltet "mosaik" i rummet
     var listenGoogle = true       // feltet "google" (søgning fra fx Google-appen)
     var listenForce = false       // feltet "force" (navn fra Noter+)
+    var peek = "reveal"           // navnet i fanebjælken: reveal (til maks zoom) | 10s | off
     var badge = true              // rødt 1-tal på Bibliotek når mosaikken er klar
     var wikiLang = "da"           // Wikipedia-sprog til billedopslag
     var seed: UInt64 = 0          // 0 = vælg et nyt ved første start
