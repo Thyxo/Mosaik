@@ -23,14 +23,23 @@ final class TileView: UIView {
     required init?(coder: NSCoder) { fatalError() }
 }
 
+/// Fælles mål (bruges også af AppState til mosaikkens område)
+enum GridGeo {
+    static func gap(_ c: Int, scale: CGFloat) -> CGFloat { c <= 5 ? 2 : (c <= 15 ? 1 : 1 / max(1, scale)) }
+    static func pitch(width: CGFloat, cols c: Int, scale: CGFloat) -> CGFloat { (width + gap(c, scale: scale)) / CGFloat(c) }
+    /// plads til fanebjælken under sidste række (målt på iPhone: 94 pt fra bunden)
+    static let barSpace: CGFloat = 60
+}
+
 final class GridView: UIScrollView {
     let content = UIView()
     var count: () -> Int = { 0 }
     var tileAt: (Int) -> Tile = { _ in Tile(src: 0) }
     var onTap: (Int) -> Void = { _ in }
     var onInfo: (Int, Bool, Int) -> Void = { _, _, _ in }
+    var dateAt: (Int) -> Date? = { _ in nil }
 
-    private(set) var levels = [3, 5, 9, 15, 24, 36]
+    private(set) var levels = [3, 5, 15, 30]
     private(set) var cols = 3
     var rev = -1
 
@@ -39,6 +48,10 @@ final class GridView: UIScrollView {
     private var animating = false
     private var lastWidth: CGFloat = 0
     private var didScrollToBottom = false
+
+    // datomærker ("Okt. 2026" / "2026")
+    private var pills: [DatePill] = []
+    private var sectionCache: [Int: (starts: [Int], labels: [NSAttributedString])] = [:]
 
     // knib
     private var pinching = false
@@ -66,8 +79,8 @@ final class GridView: UIScrollView {
     private var safe: UIEdgeInsets { window?.safeAreaInsets ?? UIEdgeInsets(top: 59, left: 0, bottom: 34, right: 0) }
     private var scale: CGFloat { max(1, traitCollection.displayScale) }
 
-    func gap(_ c: Int) -> CGFloat { c <= 5 ? 2 : (c <= 9 ? 1 : 2 / scale) }
-    func pitch(_ c: Int) -> CGFloat { (bounds.width + gap(c)) / CGFloat(c) }
+    func gap(_ c: Int) -> CGFloat { GridGeo.gap(c, scale: scale) }
+    func pitch(_ c: Int) -> CGFloat { GridGeo.pitch(width: bounds.width, cols: c, scale: scale) }
     func frameFor(_ i: Int, cols c: Int) -> CGRect {
         let p = pitch(c), g = gap(c)
         return CGRect(x: CGFloat(i % c) * p, y: CGFloat(i / c) * p, width: p - g, height: p - g)
@@ -76,7 +89,7 @@ final class GridView: UIScrollView {
         let rows = (count() + c - 1) / c
         return max(0, CGFloat(rows) * pitch(c) - gap(c))
     }
-    private var bottomInset: CGFloat { safe.bottom }
+    private var bottomInset: CGFloat { safe.bottom + GridGeo.barSpace }
     private func topInset(_ c: Int) -> CGFloat { max(safe.top + 58, bounds.height - bottomInset - contentHeight(c)) }
     private var maxOffsetY: CGFloat { max(-contentInset.top, contentSize.height + contentInset.bottom - bounds.height) }
 
@@ -111,6 +124,7 @@ final class GridView: UIScrollView {
             applyGeometry()
             if n > 0 && bounds.width > 0 { scrollToBottom(); didScrollToBottom = true }
         }
+        sectionCache.removeAll()
         for (i, t) in tiles {
             if i >= n { continue }
             configure(t, i)
@@ -128,7 +142,71 @@ final class GridView: UIScrollView {
             if !didScrollToBottom && count() > 0 { scrollToBottom(); didScrollToBottom = true }
         }
         layoutTiles()
+        layoutPills()
         report()
+    }
+
+    // MARK: Datomærker
+
+    /// gran 1 = måned, 2 = år
+    private func sections(_ gran: Int) -> (starts: [Int], labels: [NSAttributedString]) {
+        if let c = sectionCache[gran] { return c }
+        let cal = Calendar.current
+        var starts: [Int] = [], labels: [NSAttributedString] = []
+        var lastKey = Int.min
+        let white: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor.white]
+        let gray: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: 17, weight: .semibold), .foregroundColor: UIColor(white: 1, alpha: 0.6)]
+        for i in 0..<count() {
+            guard let d = dateAt(i) else { continue }
+            let c = cal.dateComponents([.year, .month], from: d)
+            let y = c.year ?? 0, m = c.month ?? 1
+            let key = gran == 1 ? y * 12 + m : y
+            if key == lastKey { continue }
+            lastKey = key
+            starts.append(i)
+            if gran == 1 {
+                let s = NSMutableAttributedString(string: Dates.monthShort(d), attributes: white)
+                s.append(NSAttributedString(string: " \(y)", attributes: gray))
+                labels.append(s)
+            } else {
+                labels.append(NSAttributedString(string: "\(y)", attributes: white))
+            }
+        }
+        sectionCache[gran] = (starts, labels)
+        return (starts, labels)
+    }
+
+    private func layoutPills() {
+        var used = 0
+        defer { for k in used..<pills.count { pills[k].isHidden = true } }
+        guard !animating, !pinching, cols >= 15, count() > 0, bounds.width > 0 else { return }
+        let (starts, labels) = sections(cols >= 24 ? 2 : 1)
+        guard !starts.isEmpty else { return }
+        let p = pitch(cols)
+        func rowTop(_ i: Int) -> CGFloat { CGFloat(i / cols) * p }
+        let probe = contentOffset.y + safe.top + 83     // mærkets faste plads under titlen
+        let bottom = contentOffset.y + bounds.height - bottomInset
+        let h = DatePill.height
+        // sidste afsnit der er startet over den faste plads
+        var lo = 0, hi = starts.count - 1, k = -1
+        while lo <= hi { let mid = (lo + hi) / 2; if rowTop(starts[mid]) <= probe { k = mid; lo = mid + 1 } else { hi = mid - 1 } }
+        func place(_ idx: Int, _ y: CGFloat) {
+            if used == pills.count { let v = DatePill(); addSubview(v); pills.append(v) }
+            let v = pills[used]; used += 1
+            v.isHidden = false
+            v.set(labels[idx])
+            v.frame = CGRect(x: 13, y: y, width: v.width, height: h)
+        }
+        if k >= 0 {
+            var y = probe
+            if k + 1 < starts.count { y = min(y, rowTop(starts[k + 1]) - h - 8) }
+            place(k, y)
+        }
+        var j = k + 1
+        while j < starts.count, rowTop(starts[j]) < bottom, used < 12 {
+            place(j, rowTop(starts[j]))
+            j += 1
+        }
     }
 
     private func range(cols c: Int, rect: CGRect) -> Range<Int> {
@@ -180,7 +258,7 @@ final class GridView: UIScrollView {
     }
 
     func tintFactor(_ c: Int) -> CGFloat {
-        let lo: CGFloat = 9, hi = CGFloat(levels.last ?? 36)
+        let lo: CGFloat = 5, hi = CGFloat(levels.last ?? 30)
         guard CGFloat(c) > lo, hi > lo else { return 0 }
         return pow(min(1, (CGFloat(c) - lo) / (hi - lo)), 1.4)
     }
@@ -203,6 +281,15 @@ final class GridView: UIScrollView {
                 }
             }
         }
+        // Fotos runder de yderste hjørner af sidste række
+        let n = count(), lastRow = ((n - 1) / cols) * cols
+        var corners: CACornerMask = []
+        if i == lastRow { corners.insert(.layerMinXMaxYCorner) }
+        if i == n - 1 { corners.insert(.layerMaxXMaxYCorner) }
+        if n % cols != 0 && i == lastRow - 1 { corners.insert(.layerMaxXMaxYCorner) }
+        t.layer.maskedCorners = corners
+        t.layer.cornerRadius = corners.isEmpty ? 0 : (cols <= 5 ? 5 : 2)
+
         let a = CGFloat(tile.alpha) * tintFactor(cols)
         t.tintView.alpha = a
         if a > 0.001 {
@@ -255,6 +342,7 @@ final class GridView: UIScrollView {
             lastPoint = g.location(in: self)
             a0 = content.convert(lastPoint, from: self)
             lastScale = 1
+            layoutPills()
         case .changed:
             guard pinching else { return }
             let atMax = cols == levels.last, atMin = cols == levels.first
@@ -340,6 +428,7 @@ final class GridView: UIScrollView {
             self.animating = false
             for (i, t) in self.tiles where newRange.contains(i) { self.configure(t, i) }
             self.layoutTiles()
+            self.layoutPills()
             self.report()
         }
     }
@@ -356,6 +445,7 @@ struct LibraryGrid: UIViewRepresentable {
         g.tileAt = { [unowned app] i in i < app.tiles.count ? app.tiles[i] : Tile(src: 0) }
         g.onTap = { [unowned app] i in app.viewerIndex = i }
         g.onInfo = { [unowned app] top, bottom, cols in app.gridInfo(topIndex: top, atBottom: bottom, cols: cols) }
+        g.dateAt = { [unowned app] i in i < app.dates.count ? app.dates[i] : nil }
         app.visibleItems = { [weak g] in g?.visibleIndices() ?? [] }
         g.setLevels(app.levels)
         g.rev = app.rev
@@ -369,5 +459,31 @@ struct LibraryGrid: UIViewRepresentable {
             g.rev = app.rev
             g.reloadAll(keepPosition: true)
         }
+    }
+}
+
+/// Mørkt mærke med måned/år øverst til venstre i gitteret
+final class DatePill: UIView {
+    static let height: CGFloat = 27
+    private let label = UILabel()
+    private(set) var width: CGFloat = 60
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = UIColor(white: 0.07, alpha: 0.78)
+        layer.cornerRadius = 10
+        layer.cornerCurve = .continuous
+        isUserInteractionEnabled = false
+        addSubview(label)
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    func set(_ text: NSAttributedString) {
+        if label.attributedText != text {
+            label.attributedText = text
+            label.sizeToFit()
+        }
+        width = ceil(label.bounds.width) + 22
+        label.frame = CGRect(x: 11, y: (Self.height - label.bounds.height) / 2, width: ceil(label.bounds.width), height: label.bounds.height)
     }
 }

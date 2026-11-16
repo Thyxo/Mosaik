@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
-"""Ikon: hvid baggrund med en blomst af 8 farvede, gennemsigtige kronblade (iOS maskerer hjørnerne)."""
-import math, os
-from PIL import Image, ImageDraw, ImageChops
+"""App-ikonet: klippet ud af et skærmbillede af den rigtige Fotos-app (mørkt iOS 26-ikon, ref/home-icon.jpeg).
+Hjørnerne (tapetet) erstattes med ikonets egen baggrund, så iOS' maske ikke viser blå kanter."""
+import os, numpy as np
+from PIL import Image, ImageFilter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-S = 1024 * 2
-img = Image.new('RGB', (S, S), (255, 255, 255))
-cols = [(250, 184, 30), (240, 123, 38), (232, 66, 84), (196, 72, 166), (128, 92, 200), (60, 140, 230), (42, 182, 196), (120, 196, 72)]
-cx = cy = S / 2
-for k, c in enumerate(cols):
-    ang = -math.pi / 2 + k * math.pi / 4
-    petal = Image.new('RGB', (S, S), (255, 255, 255))
-    d = ImageDraw.Draw(petal)
-    L, W = S * 0.205, S * 0.105
-    mx, my = cx + math.cos(ang) * L * 0.95, cy + math.sin(ang) * L * 0.95
-    pts = []
-    for t in range(0, 360, 3):
-        a = math.radians(t)
-        x, y = math.cos(a) * L, math.sin(a) * W
-        pts.append((mx + x * math.cos(ang) - y * math.sin(ang), my + x * math.sin(ang) + y * math.cos(ang)))
-    d.polygon(pts, fill=c)
-    img = ImageChops.multiply(img, petal)
-img = img.resize((1024, 1024), Image.LANCZOS)
+src = Image.open(os.path.join(ROOT, 'ref/home-icon.jpeg')).convert('RGB')
+crop = src.crop((63, 279, 288, 504))           # ikonets kant i skærmbilledet
+S = 1024
+big = np.asarray(crop.resize((S, S), Image.LANCZOS), dtype=np.float32)
+r = S * 0.235                                    # lidt større hjørne end iOS' maske
+ys, xs = np.mgrid[0:S, 0:S].astype(np.float32) + 0.5
+cx = np.clip(xs, r, S - r); cy = np.clip(ys, r, S - r)
+dx, dy = xs - cx, ys - cy
+d = np.sqrt(dx * dx + dy * dy)
+out = d > r - 6
+# flyt punkter uden for hjørnet ind mod hjørnets centrum
+k = np.where(out, (r - 10) / np.maximum(d, 1e-3), 1)
+sx = np.clip((cx + dx * k).astype(int), 0, S - 1); sy = np.clip((cy + dy * k).astype(int), 0, S - 1)
+res = big.copy()
+res[out] = big[sy[out], sx[out]]
+# også de yderste pixels langs kanterne (kan have tapet i sig)
+m = 10
+res[:m, :] = res[m:m + 1, :]; res[-m:, :] = res[-m - 1:-m, :]
+res[:, :m] = res[:, m:m + 1]; res[:, -m:] = res[:, -m - 1:-m]
+img = Image.fromarray(res.clip(0, 255).astype(np.uint8)).filter(ImageFilter.UnsharpMask(radius=3, percent=60, threshold=2))
 img.save(os.path.join(ROOT, 'ios/Mosaik/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png'))
 img.resize((512, 512), Image.LANCZOS).save(os.path.join(ROOT, 'icons/icon-512.png'))
+print('ok')

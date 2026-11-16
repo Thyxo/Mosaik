@@ -12,7 +12,7 @@ Native Swift/SwiftUI-app, der installeres med **SideStore** (ligesom Number Read
 2. Navnet kommer til Mosaik via **relæet**, fx fra Google-appen, Noter+, en Genvej eller en medhjælper (se nedenfor).
 3. Mosaik slår navnet op på Wikipedia, henter et billede og bygger mosaikken. Det tager 1–3 sekunder. Når den er klar, får **Bibliotek** et lille rødt **1**-tal, ligesom på referencen.
 4. Giv telefonen til tilskueren, eller vis den selv. Scroll lidt rundt i "dine" billeder nederst. Det er dine ægte, nyeste fotos.
-5. Knib for at zoome ud: 3 → 5 → 9 → 15 → 24 → **36 kolonner**. Først på de to yderste niveauer træder motivet frem.
+5. Knib for at zoome ud: 3 → 5 → 15 → **30 kolonner**, de samme niveauer som Fotos. Motivet træder frem på de yderste niveauer.
 
 Findes der intet billede, bliver navnet skrevet med billederne som **tekst**.
 
@@ -55,8 +55,18 @@ curl -X POST https://relay-production-03f5.up.railway.app/r/<rum> \
 - **Ægte fotos:** de N nyeste fra kamerarullen ligger nederst (de første man ser). Resten er puljen.
 - **Mål:** billedet beskæres til gitterets format, omkring et ansigt hvis Vision finder et (ansigtet fylder ca. 62 % af bredden). Tekst tegnes med ét ord pr. linje.
 - **Løseren** (`Model/Solver.swift`) vælger et puljebillede til hvert felt i det område, der ses ved maks zoom, nederst i biblioteket. Den er grådig: sjældne farver vælges først, og hvert billede bruges højst ca. 4 gange. Det samme billede står aldrig tæt på sig selv, hverken i 36- eller 3/5-kolonne-visningen. Det tager under 0,1 sek.
-- **Farvetone:** hvert felt får en farve lagt over. Den er beregnet, så feltets gennemsnit bliver præcis målfarven. Den mindste nødvendige styrke bruges, dog mindst *Mindste farvetone*. Tonen er 0 ved 3, 5 og 9 kolonner og vokser frem mod maks zoom. Tæt på ser billederne helt normale ud.
+- **Farvetone:** hvert felt får en farve lagt over. Den er beregnet, så feltets gennemsnit bliver præcis målfarven. Den mindste nødvendige styrke bruges, dog mindst *Mindste farvetone*. Tonen er 0 ved 3 og 5 kolonner og vokser frem mod maks zoom. Tæt på ser billederne helt normale ud.
 - Felter, der er på skærmen, i det øjeblik mosaikken bygges, bliver ikke byttet ud. Et relæ-skifte kan derfor ikke ses, mens tilskueren kigger.
+
+## Lighed med Fotos
+
+Mål er taget fra skærmbilleder af den rigtige Fotos-app (iOS 26, dansk) i `ref/`:
+- Titlen "Bibliotek" er 35 pt fed. "4.487 emner" står **kun nederst** i biblioteket.
+- Glasknapperne: sortér (44 pt) og "Vælg" (44 pt høj).
+- Fanebjælken er iOS' egen: Bibliotek, Samlinger og en separat søg-knap. Det røde 1-tal er fanens badge.
+- Datomærker: "Okt. 2026" ved 15 kolonner og "2026" ved maks zoom. De sidder fast under titlen og skubbes op af det næste.
+- Mellemrum: 2 pt ved 3–5 kolonner, 1 pt ved 15 og 1 pixel ved maks. Sidste rækkes yderste hjørner er runde.
+- Ikonet er klippet ud af et skærmbillede af hjemmeskærmen (`scripts/make-icon.py`, mørkt ikon).
 
 ## Installér (SideStore)
 
@@ -71,7 +81,7 @@ curl -X POST https://relay-production-03f5.up.railway.app/r/<rum> \
 
 | Fil | Indhold |
 |---|---|
-| `ios/project.yml` | XcodeGen (iOS 17+, `dk.thyxo.mosaik`, navn "Fotos") |
+| `ios/project.yml` | XcodeGen (iOS 18+, `dk.thyxo.mosaik`, navn "Fotos") |
 | `ios/Mosaik/Model/` | Farver (Lab, farvetone), mosaikløser, indstillinger. Ren Swift |
 | `ios/Mosaik/Library/` | Pulje, kamerarulle (PhotoKit), billedcache, mål (Vision), Wikipedia-opslag, relæ (SSE), datoer |
 | `ios/Mosaik/Views/GridView.swift` | Gitteret i UIKit: knib-zoom med animerede niveauskift og farvetone |

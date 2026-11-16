@@ -75,7 +75,7 @@ struct SecretPanel: View {
                 Section("Udseende") {
                     Stepper("Emner: \(Dates.number(app.s.itemCount))", value: $app.s.itemCount, in: 300...20000, step: 100)
                     TextField("Ord efter antal", text: $app.s.itemsWord)
-                    Stepper("Kolonner ved maks zoom: \(app.s.maxCols)", value: $app.s.maxCols, in: 26...50)
+                    Stepper("Kolonner ved maks zoom: \(app.s.maxCols)", value: $app.s.maxCols, in: 20...50)
                     VStack(alignment: .leading) {
                         Text("Mindste farvetone: \(Int(app.s.tintBase * 100)) %")
                         Slider(value: $app.s.tintBase, in: 0...0.8)

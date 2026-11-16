@@ -37,7 +37,7 @@ final class AppState {
     @ObservationIgnored private var started = false
 
     /// Zoom-niveauer (kolonner) som i Fotos; det sidste er mosaikken
-    var levels: [Int] { Array(Set([3, 5, 9, 15, 24].filter { $0 < s.maxCols } + [s.maxCols])).sorted() }
+    var levels: [Int] { Array(Set([3, 5, 15].filter { $0 < s.maxCols } + [s.maxCols])).sorted() }
 
     // MARK: Start
 
@@ -99,9 +99,9 @@ final class AppState {
         let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
         let win = scene?.windows.first
         let size = win?.bounds.size ?? UIScreen.main.bounds.size
-        let bottom = win?.safeAreaInsets.bottom ?? 34
+        let bottom = (win?.safeAreaInsets.bottom ?? 34) + GridGeo.barSpace
         let cols = s.maxCols
-        let pitch = (size.width + 1) / CGFloat(cols)
+        let pitch = GridGeo.pitch(width: size.width, cols: cols, scale: win?.screen.scale ?? 3)
         let visible = Int(ceil((size.height - bottom) / pitch))
         let total = (tiles.count + cols - 1) / cols
         let rows = max(1, min(total, visible))
@@ -313,10 +313,7 @@ final class AppState {
     func gridInfo(topIndex: Int, atBottom: Bool, cols: Int) {
         guard (topIndex, atBottom, cols) != lastInfo else { return }
         lastInfo = (topIndex, atBottom, cols)
-        if atBottom || dates.isEmpty {
-            subtitle = "\(Dates.number(tiles.count)) \(s.itemsWord)"
-        } else {
-            subtitle = Dates.header(dates[min(max(0, topIndex), dates.count - 1)], fine: cols <= 5)
-        }
+        // Fotos viser kun antallet nederst; ellers står datoen i mærket i gitteret
+        subtitle = atBottom ? "\(Dates.number(tiles.count)) \(s.itemsWord)" : ""
     }
 }

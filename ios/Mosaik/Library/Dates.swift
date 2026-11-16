@@ -48,6 +48,9 @@ enum Dates {
     private static let dayMonth = fmt("dMMMM")
     private static let longDay = fmt("dMMMMy")
     private static let weekday = fmt("EEEE")
+    private static let monthAbbr: DateFormatter = { let f = DateFormatter(); f.locale = locale; f.dateFormat = "MMM"; return f }()
+    /// "Okt." / "Maj"
+    static func monthShort(_ d: Date) -> String { monthAbbr.string(from: d).capitalizedFirst }
     private static let time: DateFormatter = { let f = DateFormatter(); f.locale = locale; f.dateFormat = "HH.mm"; return f }()
 
     /// Undertitel i biblioteket mens man scroller

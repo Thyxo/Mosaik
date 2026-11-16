@@ -10,6 +10,7 @@ struct MosaikApp: App {
         WindowGroup {
             RootView()
                 .environment(app)
+                .preferredColorScheme(.dark)
                 .task { await app.start() }
                 .onChange(of: phase) { _, p in
                     if p == .active { app.resumeRelay() } else if p == .background { app.pauseRelay() }
@@ -24,7 +25,7 @@ struct RootView: View {
     var body: some View {
         @Bindable var app = app
         ZStack {
-            LibraryScreen()
+            MainTabs()
             if let i = app.viewerIndex {
                 ViewerView(start: i)
                     .transition(.opacity.combined(with: .scale(scale: 0.96)))

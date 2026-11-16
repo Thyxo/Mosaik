@@ -108,7 +108,7 @@ jobs:
               'localizedDescription': f"Build {os.environ['BUILD']}",
               'downloadURL': os.environ['URL'],
               'size': int(sys.argv[1]),
-              'minOSVersion': '17.0',
+              'minOSVersion': '18.0',
           }
           app['versions'] = [v] + [x for x in app.get('versions', []) if x.get('downloadURL') != v['downloadURL']][:9]
           # Ældre AltStore-felter

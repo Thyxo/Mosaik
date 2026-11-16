@@ -4,7 +4,7 @@ import Foundation
 struct Settings: Codable, Equatable {
     var itemCount = 2589          // antal emner i biblioteket
     var itemsWord = "emner"       // "2.589 emner"
-    var maxCols = 36              // kolonner ved maks zoom (mosaikken)
+    var maxCols = 30              // kolonner ved maks zoom (mosaikken), som i Fotos
     var tintBase = 0.30           // mindste farvetone ved maks zoom (0…1)
     var tintCap = 0.92            // højeste farvetone
     var textTint = 0.55           // mindste farvetone når målet er tekst
