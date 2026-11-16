@@ -1,0 +1,5 @@
+# Genereres af XcodeGen / Xcode
+Mosaik.xcodeproj/
+Mosaik/Info.plist
+build/
+DerivedData/

@@ -1,0 +1,27 @@
+{
+  "name": "Mosaik",
+  "identifier": "dk.thyxo.mosaik.source",
+  "subtitle": "Falsk Fotos-app med mosaik-afsløring",
+  "iconURL": "https://raw.githubusercontent.com/Thyxo/mosaik/main/icons/icon-512.png",
+  "website": "https://github.com/Thyxo/mosaik",
+  "apps": [
+    {
+      "name": "Fotos",
+      "bundleIdentifier": "dk.thyxo.mosaik",
+      "developerName": "Thyxo",
+      "subtitle": "Mosaik",
+      "localizedDescription": "Ligner iPhonens Fotos-app. Zoomer man helt ud i biblioteket, danner billederne forudsigelsen: et ansigt, et billede eller et navn. Forudsigelsen kommer via relæet eller er valgt på forhånd.",
+      "iconURL": "https://raw.githubusercontent.com/Thyxo/mosaik/main/icons/icon-512.png",
+      "tintColor": "0A84FF",
+      "category": "utilities",
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSPhotoLibraryUsageDescription": "Fotos viser billederne i dit bibliotek."
+        }
+      },
+      "versions": []
+    }
+  ],
+  "news": []
+}
