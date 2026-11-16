@@ -20,7 +20,21 @@
           "NSPhotoLibraryUsageDescription": "Fotos viser billederne i dit bibliotek."
         }
       },
-      "versions": []
+      "versions": [
+        {
+          "version": "1.0.0",
+          "buildVersion": "1",
+          "date": "2026-11-16T08:31:03Z",
+          "localizedDescription": "Build 1",
+          "downloadURL": "https://github.com/Thyxo/Mosaik/releases/download/v1.0.0-1/Mosaik.ipa",
+          "size": 15829789,
+          "minOSVersion": "18.0"
+        }
+      ],
+      "version": "1.0.0",
+      "versionDate": "2026-11-16T08:31:03Z",
+      "downloadURL": "https://github.com/Thyxo/Mosaik/releases/download/v1.0.0-1/Mosaik.ipa",
+      "size": 15829789
     }
   ],
   "news": []
